@@ -72,7 +72,7 @@ fn emit_open_project(app: &tauri::AppHandle, path: &str) {
 
 fn handle_launch_files(app: &tauri::AppHandle) {
     for arg in std::env::args().skip(1) {
-        if arg.endsWith(".pur") {
+        if arg.ends_with(".pur") || arg.ends_with(".pur.autosave") {
             emit_open_project(app, &arg);
             return;
         }
