@@ -102,11 +102,12 @@ pub fn run() {
         .build(tauri::generate_context!())
         .expect("error while running tauri application")
         .run(|app_handle, event| {
+            #[cfg(any(target_os = "macos", target_os = "ios", target_os = "linux"))]
             if let RunEvent::Opened { urls } = event {
                 for url in urls {
                     if let Ok(path) = url.to_file_path() {
                         let p = path.to_string_lossy().to_string();
-                        if p.ends_with(".pur") {
+                        if p.ends_with(".pur") || p.ends_with(".pur.autosave") {
                             emit_open_project(app_handle, &p);
                         }
                     }
