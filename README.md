@@ -90,6 +90,16 @@ npm test         # 单元测试
 npm run tauri build   # 桌面安装包（需 Rust）
 ```
 
+### GitHub Actions（自动发布）
+
+推送 `v*` 标签（如 `v1.0.0`）或在本仓库 **Actions → Release → Run workflow** 手动触发，将自动：
+
+1. 运行 `npm test` 与前端构建  
+2. 在 macOS（Apple Silicon / Intel）、Windows、Linux 上执行 `tauri build`  
+3. 将 `.dmg`、`.msi`、`.deb` / `.AppImage` 等上传到对应 [GitHub Release](https://github.com/art13817979231-svg/kantu/releases)
+
+工作流定义见 `.github/workflows/release.yml`。
+
 ## 快捷键
 
 | 快捷键 | 行为 |

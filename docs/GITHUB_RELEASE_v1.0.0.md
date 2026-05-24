@@ -89,9 +89,7 @@ npm run tauri build
 
 ## 发布 Checklist
 
-- [ ] `npm test` 通过
-- [ ] `npm run tauri build` 在三端或目标平台打出安装包
-- [ ] 将 `src-tauri/target/release/bundle/` 下产物上传到 Release Assets
-- [ ] Tag `v1.0.0` 指向发布 commit
+- [ ] `npm test` 通过（或由 CI 自动执行）
+- [ ] 推送 `v*` 标签触发 [Release workflow](https://github.com/art13817979231-svg/kantu/actions/workflows/release.yml)，或本地 `npm run tauri build` 后手动上传 Assets
 - [x] 仓库地址：https://github.com/art13817979231-svg/kantu
 - [ ] （可选）macOS 公证 / Windows 签名后再上传
