@@ -70,8 +70,8 @@ RefBoard 使用**自定义** `.pur` 格式，与官方 PureRef 的 `.pur` **不�
 ### 从源码构建
 
 ```bash
-git clone <your-repo-url>
-cd refboard
+git clone https://github.com/art13817979231-svg/kantu.git
+cd kantu
 npm install
 npm run tauri build
 ```
@@ -82,7 +82,7 @@ npm run tauri build
 
 ---
 
-**Full Changelog**: https://github.com/YOUR_ORG/refboard/compare/v0.1.0...v1.0.0
+**Full Changelog**: https://github.com/art13817979231-svg/kantu/releases/tag/v1.0.0
 ```
 
 ---
@@ -93,5 +93,5 @@ npm run tauri build
 - [ ] `npm run tauri build` 在三端或目标平台打出安装包
 - [ ] 将 `src-tauri/target/release/bundle/` 下产物上传到 Release Assets
 - [ ] Tag `v1.0.0` 指向发布 commit
-- [ ] 替换上文中的 `YOUR_ORG/refboard` 为实际仓库地址
+- [x] 仓库地址：https://github.com/art13817979231-svg/kantu
 - [ ] （可选）macOS 公证 / Windows 签名后再上传
