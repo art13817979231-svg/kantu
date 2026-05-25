@@ -2,7 +2,7 @@
 
 轻量桌面参考图板，对标 PureRef，路线升级为 **设计师工作台**。基于 **Tauri 2 + React + Konva** 构建。
 
-> 完整产品规划见 [docs/PRD-v2-设计师工作台.md](docs/PRD-v2-设计师工作台.md)  
+> 产品规划（已同步 v1.0.0 实现）：[docs/PRD-v2-设计师工作台.md](docs/PRD-v2-设计师工作台.md)  
 > 版本历史见 [CHANGELOG.md](CHANGELOG.md)
 
 **当前版本：1.0.0**
