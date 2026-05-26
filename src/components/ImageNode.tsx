@@ -28,6 +28,7 @@ export function ImageNode({
   const setSelectedFrameId = useCanvasStore((s) => s.setSelectedFrameId);
   const toggleImageZoom = useCanvasStore((s) => s.toggleImageZoom);
   const setContextMenu = useUiStore((s) => s.setContextMenu);
+  const immersiveMode = useUiStore((s) => s.immersiveMode);
 
   const localX = frameOrigin ? item.x - frameOrigin.x : item.x;
   const localY = frameOrigin ? item.y - frameOrigin.y : item.y;
@@ -82,6 +83,7 @@ export function ImageNode({
       }}
       onContextMenu={(e) => {
         e.evt.preventDefault();
+        if (immersiveMode) return;
         const ev = e.evt as MouseEvent;
         setContextMenu({ x: ev.clientX, y: ev.clientY, imageId: item.id });
         setSelectedIds([item.id]);

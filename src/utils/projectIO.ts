@@ -55,14 +55,18 @@ export async function pickOpenProject(): Promise<string | null> {
   return selected;
 }
 
-export async function pickSaveProject(currentPath: string | null): Promise<string | null> {
+export async function pickSaveProject(
+  currentPath: string | null,
+  options?: { title?: string },
+): Promise<string | null> {
   if (!isTauriApp()) {
-    alert("浏览器预览不支持保存 .pur 项目，请使用 npm run tauri dev 启动桌面版。");
     return null;
   }
   const selected = await save({
-    defaultPath: currentPath ?? "untitled.pur",
-    filters: [{ name: "RefBoard Project", extensions: ["pur"] }],
+    title: options?.title ?? "保存项目",
+    defaultPath: currentPath ?? "未命名.pur",
+    filters: [{ name: "RefBoard 项目", extensions: ["pur"] }],
+    canCreateDirectories: true,
   });
   return selected;
 }

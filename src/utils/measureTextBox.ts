@@ -1,6 +1,6 @@
 export const TEXT_PADDING = 10;
-export const TEXT_MIN_WIDTH = 48;
-export const TEXT_MIN_HEIGHT = 36;
+export const TEXT_MIN_WIDTH = 96;
+export const TEXT_MIN_HEIGHT = 32;
 export const TEXT_MAX_WIDTH = 640;
 const TEXT_FONT_FAMILY = '"Noto Sans SC", Outfit, sans-serif';
 const TEXT_LINE_HEIGHT = 1.35;

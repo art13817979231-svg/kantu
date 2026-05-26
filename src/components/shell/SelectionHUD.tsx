@@ -30,6 +30,9 @@ export function SelectionHUD() {
   const compareOpacity = useUiStore((s) => s.compareOpacity);
   const setCompareMode = useUiStore((s) => s.setCompareMode);
   const setCompareOpacity = useUiStore((s) => s.setCompareOpacity);
+  const immersiveMode = useUiStore((s) => s.immersiveMode);
+
+  if (immersiveMode) return null;
 
   const activeGroup = selectedFrameId
     ? groups.find((g) => g.id === selectedFrameId && g.boardId === activeBoardId)

@@ -4,6 +4,7 @@ const ROWS: { keys: string; action: string }[] = [
   { keys: "Ctrl/Cmd+O", action: "打开项目" },
   { keys: "Ctrl/Cmd+S", action: "保存" },
   { keys: "Ctrl/Cmd+Shift+S", action: "另存为" },
+  { keys: "Ctrl/Cmd+Shift+I", action: "沉浸模式（隐藏全部菜单）" },
   { keys: "Ctrl/Cmd+N", action: "新建项目" },
   { keys: "Ctrl/Cmd+I", action: "导入图片" },
   { keys: "Ctrl/Cmd+A", action: "全选" },
@@ -41,9 +42,10 @@ const ROWS: { keys: string; action: string }[] = [
 
 export function ShortcutsHelp() {
   const open = useUiStore((s) => s.shortcutsOpen);
+  const immersiveMode = useUiStore((s) => s.immersiveMode);
   const setOpen = useUiStore((s) => s.setShortcutsOpen);
 
-  if (!open) return null;
+  if (!open || immersiveMode) return null;
 
   return (
     <div

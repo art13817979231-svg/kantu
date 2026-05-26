@@ -1,11 +1,19 @@
 import { useEffect, useRef } from "react";
-import { Group, Rect, Text } from "react-konva";
+import { Circle, Group, Line, Rect, Text } from "react-konva";
 import type Konva from "konva";
 import type { TextItem } from "../types/project";
 import { useCanvasStore } from "../store/canvasStore";
 import { useUiStore } from "../store/uiStore";
 import { TEXT_PADDING, TEXT_MIN_WIDTH, TEXT_MIN_HEIGHT } from "../utils/measureTextBox";
-import { DEFAULT_TEXT_BACKGROUND, TEXT_CORNER_RADIUS } from "../utils/textDefaults";
+import {
+  DEFAULT_TEXT_BACKGROUND,
+  TEXT_CORNER_RADIUS,
+} from "../utils/textDefaults";
+import {
+  DEFAULT_TEXT_STROKE,
+  TEXT_BORDER_OVERSHOOT,
+  textBoxOvershootSegments,
+} from "../utils/textBoxFrame";
 
 type Props = {
   item: TextItem;
@@ -14,6 +22,9 @@ type Props = {
   onSelect: (id: string, additive: boolean) => void;
   onTransformEnd: (id: string, patch: Partial<TextItem>) => void;
 };
+
+const TOP_HANDLE_OFFSET = 10;
+const TOP_HANDLE_RADIUS = 4;
 
 export function TextNode({
   item,
@@ -27,6 +38,7 @@ export function TextNode({
   const setSelectedIds = useCanvasStore((s) => s.setSelectedIds);
   const setSelectedFrameId = useCanvasStore((s) => s.setSelectedFrameId);
   const setContextMenu = useUiStore((s) => s.setContextMenu);
+  const immersiveMode = useUiStore((s) => s.immersiveMode);
   const setEditingTextId = useUiStore((s) => s.setEditingTextId);
   const editingTextId = useUiStore((s) => s.editingTextId);
   const remeasureText = useCanvasStore((s) => s.remeasureText);
@@ -51,6 +63,12 @@ export function TextNode({
     frameOrigin
       ? { x: frameOrigin.x + lx, y: frameOrigin.y + ly }
       : { x: lx, y: ly };
+
+  const borderSegments = textBoxOvershootSegments(
+    item.width,
+    item.height,
+    TEXT_BORDER_OVERSHOOT,
+  );
 
   return (
     <Group
@@ -82,6 +100,7 @@ export function TextNode({
       }}
       onContextMenu={(e) => {
         e.evt.preventDefault();
+        if (immersiveMode) return;
         const ev = e.evt as MouseEvent;
         setContextMenu({ x: ev.clientX, y: ev.clientY, textId: item.id });
         setSelectedIds([item.id]);
@@ -120,10 +139,25 @@ export function TextNode({
         width={item.width}
         height={item.height}
         fill={item.backgroundColor ?? DEFAULT_TEXT_BACKGROUND}
-        stroke="rgba(138, 180, 248, 0.35)"
-        strokeWidth={1}
         cornerRadius={TEXT_CORNER_RADIUS}
         listening
+      />
+      {borderSegments.map((seg, i) => (
+        <Line
+          key={i}
+          points={seg}
+          stroke={DEFAULT_TEXT_STROKE}
+          strokeWidth={1}
+          listening={false}
+          perfectDrawEnabled={false}
+        />
+      ))}
+      <Circle
+        x={item.width / 2}
+        y={-TOP_HANDLE_OFFSET}
+        radius={TOP_HANDLE_RADIUS}
+        fill="rgba(255, 255, 255, 0.95)"
+        listening={false}
       />
       <Text
         text={item.text}

@@ -8,29 +8,23 @@ import { FRAME_MIN_SIZE, frameBoundsNodeId } from "../utils/frameBounds";
 import { resolveFrameStyle } from "../utils/frameDefaults";
 import { useUiStore } from "../store/uiStore";
 import { ImageNode } from "./ImageNode";
-import { TextNode } from "./TextNode";
-import type { TextItem } from "../types/project";
 
 type Props = {
   frame: ImageGroup;
   images: ImageItem[];
-  texts: TextItem[];
   panMode: boolean;
   selected: boolean;
   onSelectFrame: (id: string) => void;
   onSelectImage: (id: string, additive: boolean) => void;
-  onTextTransformEnd: (id: string, patch: Partial<TextItem>) => void;
 };
 
 export function FrameNode({
   frame,
   images,
-  texts,
   panMode,
   selected,
   onSelectFrame,
   onSelectImage,
-  onTextTransformEnd,
 }: Props) {
   const groupRef = useRef<Konva.Group>(null);
   const boundsRef = useRef<Konva.Rect>(null);
@@ -40,6 +34,7 @@ export function FrameNode({
   const updateImage = useCanvasStore((s) => s.updateImage);
   const syncFrameBounds = useCanvasStore((s) => s.syncFrameBounds);
   const setContextMenu = useUiStore((s) => s.setContextMenu);
+  const immersiveMode = useUiStore((s) => s.immersiveMode);
 
   const virtual = isClusterGroup(frame);
   const origin = { x: frame.x, y: frame.y };
@@ -79,6 +74,7 @@ export function FrameNode({
         onContextMenu={(e) => {
           e.evt.preventDefault();
           e.cancelBubble = true;
+          if (immersiveMode) return;
           onSelectFrame(frame.id);
           const ev = e.evt as MouseEvent;
           setContextMenu({ x: ev.clientX, y: ev.clientY, frameId: frame.id });
@@ -122,19 +118,6 @@ export function FrameNode({
           onTransformEnd={(id, patch) => {
             updateImage(id, patch);
             afterImageDrag(id);
-            syncFrameBounds(frame.id);
-          }}
-        />
-      ))}
-      {texts.map((t) => (
-        <TextNode
-          key={t.id}
-          item={t}
-          frameOrigin={origin}
-          panMode={panMode}
-          onSelect={onSelectImage}
-          onTransformEnd={(id, patch) => {
-            onTextTransformEnd(id, patch);
             syncFrameBounds(frame.id);
           }}
         />

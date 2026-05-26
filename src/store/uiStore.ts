@@ -36,6 +36,15 @@ type UiState = {
   /** 双击放大单图时记录，再次双击或 Esc 恢复 */
   imageZoomFocusId: string | null;
   viewportBeforeImageZoom: Viewport | null;
+  /** 沉浸模式：隐藏顶栏、侧栏、画板栏及画布浮层控件 */
+  immersiveMode: boolean;
+  immersiveRestore: {
+    sidebarCollapsed: boolean;
+    showMinimap: boolean;
+    compareMode: boolean;
+    appMode: AppMode;
+    shortcutsOpen: boolean;
+  } | null;
   setSidebarCollapsed: (v: boolean) => void;
   toggleSidebar: () => void;
   setCompactMode: (v: boolean) => void;
@@ -57,6 +66,9 @@ type UiState = {
   toggleFrameDrawMode: () => void;
   setEditingTextId: (id: string | null) => void;
   clearImageZoom: () => void;
+  enterImmersive: () => void;
+  exitImmersive: () => void;
+  toggleImmersive: () => void;
 };
 
 function loadSidebarCollapsed(): boolean {
@@ -94,6 +106,8 @@ export const useUiStore = create<UiState>((set, get) => ({
   editingTextId: null,
   imageZoomFocusId: null,
   viewportBeforeImageZoom: null,
+  immersiveMode: false,
+  immersiveRestore: null,
 
   setSidebarCollapsed: (v) => {
     localStorage.setItem("refboard-sidebar-collapsed", String(v));
@@ -143,4 +157,50 @@ export const useUiStore = create<UiState>((set, get) => ({
   setEditingTextId: (id) => set({ editingTextId: id }),
   clearImageZoom: () =>
     set({ imageZoomFocusId: null, viewportBeforeImageZoom: null }),
+
+  enterImmersive: () => {
+    const s = get();
+    if (s.immersiveMode) return;
+    set({
+      immersiveRestore: {
+        sidebarCollapsed: s.sidebarCollapsed,
+        showMinimap: s.showMinimap,
+        compareMode: s.compareMode,
+        appMode: s.appMode,
+        shortcutsOpen: s.shortcutsOpen,
+      },
+      immersiveMode: true,
+      sidebarCollapsed: true,
+      showMinimap: false,
+      compareMode: false,
+      shortcutsOpen: false,
+      contextMenu: null,
+      frameDrawMode: false,
+    });
+  },
+
+  exitImmersive: () => {
+    const s = get();
+    if (!s.immersiveMode) return;
+    const restore = s.immersiveRestore;
+    set({
+      immersiveMode: false,
+      immersiveRestore: null,
+      ...(restore
+        ? {
+            sidebarCollapsed: restore.sidebarCollapsed,
+            showMinimap: restore.showMinimap,
+            compareMode: restore.compareMode,
+            appMode: restore.appMode,
+            shortcutsOpen: restore.shortcutsOpen,
+          }
+        : {}),
+      contextMenu: null,
+    });
+  },
+
+  toggleImmersive: () => {
+    if (get().immersiveMode) get().exitImmersive();
+    else get().enterImmersive();
+  },
 }));

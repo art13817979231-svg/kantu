@@ -4,11 +4,10 @@ import { useUiStore } from "../store/uiStore";
 import {
   openProjectFile,
   pickOpenProject,
-  pickSaveProject,
   pickImages,
-  saveProjectFile,
   buildManifest,
 } from "../utils/projectIO";
+import { saveProjectWithPicker } from "../utils/saveProjectFlow";
 import {
   autosavePath,
   removeDraftAutosave,
@@ -178,10 +177,20 @@ export function useShortcuts(handlers: ShortcutHandlers) {
   );
   useHotkeys("shift+/", (e) => {
     e.preventDefault();
+    if (useUiStore.getState().immersiveMode) return;
     setShortcutsOpen(true);
+  });
+  useHotkeys("mod+shift+i", (e) => {
+    e.preventDefault();
+    useUiStore.getState().toggleImmersive();
   });
   useHotkeys("escape", (e) => {
     const ui = useUiStore.getState();
+    if (ui.immersiveMode) {
+      e.preventDefault();
+      useUiStore.getState().exitImmersive();
+      return;
+    }
     if (ui.editingTextId) {
       e.preventDefault();
       useUiStore.getState().setEditingTextId(null);
@@ -267,13 +276,6 @@ export function createProjectHandlers(
     onSave: async (saveAs = false) => {
       const state = getState();
       const ui = useUiStore.getState();
-      let path = state.projectPath;
-      if (!path || saveAs) {
-        path = await pickSaveProject(path);
-        if (!path) return;
-        if (!path.endsWith(".pur")) path += ".pur";
-      }
-
       const snap = state.getSnapshot();
       const manifest = buildManifest(
         snap.images,
@@ -289,7 +291,19 @@ export function createProjectHandlers(
           compactMode: ui.compactMode,
         },
       );
-      await saveProjectFile(path, manifest, state.images);
+
+      const result = await saveProjectWithPicker(manifest, state.images, {
+        saveAs,
+        currentPath: state.projectPath,
+      });
+
+      if (!result.ok) {
+        if (result.cancelled) return;
+        alert(result.error ?? "保存失败");
+        return;
+      }
+
+      const path = result.path;
       state.markSaved(path);
       addRecentFile(path);
       await removeDraftAutosave();

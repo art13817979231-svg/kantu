@@ -14,10 +14,10 @@ import type Konva from "konva";
 
 type Props = {
   onNew: () => void;
-  onOpen: () => void;
-  onSave: () => void;
-  onSaveAs: () => void;
-  onImport: () => void;
+  onOpen: () => void | Promise<void>;
+  onSave: () => void | Promise<void>;
+  onSaveAs: () => void | Promise<void>;
+  onImport: () => void | Promise<void>;
   stageRef: React.RefObject<Konva.Stage | null>;
   onFitView?: () => void;
 };
@@ -46,6 +46,8 @@ export function ToolbarMenu({
   const toggleCompact = useUiStore((s) => s.toggleCompactMode);
   const frameDrawMode = useUiStore((s) => s.frameDrawMode);
   const toggleFrameDrawMode = useUiStore((s) => s.toggleFrameDrawMode);
+  const toggleImmersive = useUiStore((s) => s.toggleImmersive);
+  const immersiveMode = useUiStore((s) => s.immersiveMode);
   const createGroupFromSelected = useCanvasStore((s) => s.createGroupFromSelected);
   const selectedIds = useCanvasStore((s) => s.selectedIds);
   const images = useCanvasStore((s) => s.images);
@@ -82,6 +84,14 @@ export function ToolbarMenu({
     setOpen(false);
   };
 
+  const runAsync = (fn: () => void | Promise<void>) => {
+    setOpen(false);
+    void Promise.resolve(fn()).catch((err) => {
+      console.error(err);
+      alert(`操作失败：${err instanceof Error ? err.message : String(err)}`);
+    });
+  };
+
   return (
     <div className="toolbar-menu-wrap" ref={wrapRef}>
       <button
@@ -98,10 +108,18 @@ export function ToolbarMenu({
           <div className="menu-section">
             <span className="menu-label">项目</span>
             <NewProjectMenu onBlankNew={() => run(onNew)} />
-            <button type="button" onClick={() => run(onOpen)}>打开</button>
-            <button type="button" onClick={() => run(onSave)}>保存</button>
-            <button type="button" onClick={() => run(onSaveAs)}>另存为</button>
-            <button type="button" onClick={() => run(onImport)}>导入图片</button>
+            <button type="button" onClick={() => runAsync(onOpen)}>
+              打开
+            </button>
+            <button type="button" onClick={() => runAsync(onSave)}>
+              保存
+            </button>
+            <button type="button" onClick={() => runAsync(onSaveAs)}>
+              另存为
+            </button>
+            <button type="button" onClick={() => runAsync(onImport)}>
+              导入图片
+            </button>
           </div>
           {isViewMode && (
             <div className="menu-section">
@@ -162,6 +180,13 @@ export function ToolbarMenu({
           )}
           <div className="menu-section">
             <span className="menu-label">视图</span>
+            <button
+              type="button"
+              className={immersiveMode ? "active" : ""}
+              onClick={() => run(toggleImmersive)}
+            >
+              沉浸模式
+            </button>
             {!isViewMode && onFitView && (
               <button type="button" onClick={() => run(onFitView)}>
                 适应画布

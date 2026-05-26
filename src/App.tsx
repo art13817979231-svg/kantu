@@ -5,6 +5,7 @@ import { AppShell } from "./components/shell/AppShell";
 import { ShortcutsHelp } from "./components/shell/ShortcutsHelp";
 import { ContextMenu } from "./components/shell/ContextMenu";
 import { AutosaveRecoveryModal } from "./components/shell/AutosaveRecoveryModal";
+import { ImmersiveHint } from "./components/shell/ImmersiveHint";
 import { Toolbar } from "./components/Toolbar";
 import { InfiniteCanvas } from "./components/InfiniteCanvas";
 import { SecondaryView } from "./components/SecondaryView";
@@ -187,6 +188,7 @@ function App() {
       />
       <ShortcutsHelp />
       <ContextMenu />
+      <ImmersiveHint />
       <AutosaveRecoveryModal
         onRestore={(path) => {
           useUiStore.getState().setAutosaveRecoveryPaths(null);

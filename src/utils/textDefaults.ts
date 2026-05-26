@@ -4,9 +4,13 @@ import { DEFAULT_BOARD_ID } from "../types/project";
 import { measureTextBox } from "./measureTextBox";
 
 export const DEFAULT_TEXT = "输入标注…";
-export const DEFAULT_TEXT_FONT_SIZE = 24;
+export const DEFAULT_TEXT_FONT_SIZE = 18;
+/** 新建文本框默认宽高（宽扁条，约 5:1） */
+export const DEFAULT_TEXT_WIDTH = 280;
+export const DEFAULT_TEXT_HEIGHT = 48;
 export const DEFAULT_TEXT_BACKGROUND = "rgba(18, 18, 24, 0.72)";
-export const TEXT_CORNER_RADIUS = 10;
+/** 参考图：直角框，角部用延伸线而非圆角 */
+export const TEXT_CORNER_RADIUS = 0;
 
 export type TextBackgroundPreset = {
   id: string;
@@ -67,13 +71,18 @@ export function createTextItem(
   const text = partial.text ?? DEFAULT_TEXT;
   const fontSize = partial.fontSize ?? DEFAULT_TEXT_FONT_SIZE;
   const measured = measureTextBox(text, fontSize);
+  const useDefaultBox =
+    partial.width === undefined &&
+    partial.height === undefined &&
+    partial.autoSize === undefined;
   return {
     id: partial.id ?? uuidv4(),
     text,
     x: partial.x ?? 0,
     y: partial.y ?? 0,
-    width: partial.width ?? measured.width,
-    height: partial.height ?? measured.height,
+    width: partial.width ?? (useDefaultBox ? DEFAULT_TEXT_WIDTH : measured.width),
+    height:
+      partial.height ?? (useDefaultBox ? DEFAULT_TEXT_HEIGHT : measured.height),
     fontSize,
     fill: partial.fill ?? "#f0f0f5",
     backgroundColor: partial.backgroundColor ?? DEFAULT_TEXT_BACKGROUND,
@@ -86,6 +95,6 @@ export function createTextItem(
     groupId: partial.groupId ?? null,
     categoryId: partial.categoryId ?? null,
     boardId: partial.boardId ?? DEFAULT_BOARD_ID,
-    autoSize: partial.autoSize ?? true,
+    autoSize: partial.autoSize ?? !useDefaultBox,
   };
 }

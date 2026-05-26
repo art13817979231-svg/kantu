@@ -5,13 +5,16 @@ import type Konva from "konva";
 import { ToolbarMenu } from "./shell/ToolbarMenu";
 
 type Props = {
-  onOpen: () => void;
-  onSave: () => void;
-  onSaveAs: () => void;
-  onImport: () => void;
+  onOpen: () => void | Promise<void>;
+  onSave: () => void | Promise<void>;
+  onSaveAs: () => void | Promise<void>;
+  onImport: () => void | Promise<void>;
   onNew: () => void;
   stageRef: React.RefObject<Konva.Stage | null>;
 };
+
+const desktopOnlyTitle =
+  "此功能需在 RefBoard 桌面版使用（浏览器预览无法读写 .pur 项目）";
 
 export function Toolbar({
   onOpen,
@@ -30,6 +33,20 @@ export function Toolbar({
   const toolMode = useUiStore((s) => s.toolMode);
   const setToolMode = useUiStore((s) => s.setToolMode);
   const isViewMode = appMode === "view";
+  const desktop = isTauriApp();
+  const immersiveMode = useUiStore((s) => s.immersiveMode);
+  const toggleImmersive = useUiStore((s) => s.toggleImmersive);
+
+  const immersiveBtn = (
+    <button
+      type="button"
+      className={immersiveMode ? "active" : ""}
+      onClick={() => toggleImmersive()}
+      title="沉浸模式 · 隐藏全部菜单 · ⌘⇧I"
+    >
+      沉浸
+    </button>
+  );
 
   const textToolBtn = (
     <button
@@ -46,6 +63,39 @@ export function Toolbar({
     ? projectPath.split(/[/\\]/).pop()
     : "未命名项目";
 
+  const fileActions = (
+    <>
+      <button
+        type="button"
+        className="btn-secondary"
+        onClick={() => void onOpen()}
+        title={desktop ? "打开 .pur 项目 · ⌘O" : desktopOnlyTitle}
+      >
+        打开
+      </button>
+      <button
+        type="button"
+        className={`btn-secondary${isDirty ? " toolbar-save-dirty" : ""}`}
+        onClick={() => void onSave()}
+        title={
+          desktop
+            ? "保存 · ⌘S（.pur 为 RefBoard 专用格式）"
+            : desktopOnlyTitle
+        }
+      >
+        保存
+      </button>
+      <button
+        type="button"
+        className="btn-secondary"
+        onClick={() => void onSaveAs()}
+        title={desktop ? "另存为 · ⌘⇧S" : desktopOnlyTitle}
+      >
+        另存为
+      </button>
+    </>
+  );
+
   if (isViewMode) {
     return (
       <header
@@ -54,22 +104,19 @@ export function Toolbar({
         <div className="toolbar-brand toolbar-brand-minimal">
           <span className="brand-mark" aria-hidden />
           <span className="app-title">RefBoard</span>
+          <span className="project-title view" title={fileName}>
+            {fileName}
+          </span>
           {isDirty && (
             <span className="dirty-dot" title={`${fileName} · 未保存`} />
           )}
-          {!isTauriApp() && <span className="browser-badge">预览</span>}
+          {!desktop && <span className="browser-badge">预览</span>}
         </div>
         <div className="toolbar-actions">
+          {immersiveBtn}
           {textToolBtn}
-          <button
-            type="button"
-            className="btn-secondary"
-            onClick={() => setAppMode("organize")}
-            title="图层、色标、对齐等整理能力"
-          >
-            整理
-          </button>
-          <button type="button" className="btn-primary" onClick={onImport}>
+          {fileActions}
+          <button type="button" className="btn-primary" onClick={() => void onImport()}>
             导入
           </button>
           <ToolbarMenu
@@ -104,8 +151,10 @@ export function Toolbar({
         </span>
       </div>
       <div className="toolbar-actions">
+        {immersiveBtn}
         {textToolBtn}
-        <button type="button" className="btn-primary" onClick={onImport}>
+        {fileActions}
+        <button type="button" className="btn-primary" onClick={() => void onImport()}>
           导入
         </button>
         <ToolbarMenu

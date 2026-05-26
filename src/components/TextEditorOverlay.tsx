@@ -4,6 +4,7 @@ import { useCanvasStore } from "../store/canvasStore";
 import { useUiStore } from "../store/uiStore";
 import { measureTextBox } from "../utils/measureTextBox";
 import { TEXT_CORNER_RADIUS } from "../utils/textDefaults";
+import { DEFAULT_TEXT_STROKE } from "../utils/textBoxFrame";
 type Props = {
   stageRef: React.RefObject<Konva.Stage | null>;
 };
@@ -73,6 +74,7 @@ export function TextEditorOverlay({ stageRef }: Props) {
         textAlign: item.align,
         backgroundColor: item.backgroundColor,
         borderRadius: TEXT_CORNER_RADIUS,
+        border: `1px solid ${DEFAULT_TEXT_STROKE}`,
         boxSizing: "border-box",
       }}
       onBlur={commit}

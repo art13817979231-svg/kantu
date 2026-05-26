@@ -25,7 +25,13 @@ pub struct OpenProjectResult {
 }
 
 pub fn save_project_zip(path: &str, manifest: &str, assets: &[SaveAsset]) -> Result<(), String> {
-    let file = File::create(path).map_err(|e| e.to_string())?;
+    let path_buf = Path::new(path);
+    if let Some(parent) = path_buf.parent() {
+        if !parent.as_os_str().is_empty() {
+            fs::create_dir_all(parent).map_err(|e| e.to_string())?;
+        }
+    }
+    let file = File::create(path_buf).map_err(|e| e.to_string())?;
     let mut zip = ZipWriter::new(file);
     let options = SimpleFileOptions::default()
         .compression_method(zip::CompressionMethod::Deflated);

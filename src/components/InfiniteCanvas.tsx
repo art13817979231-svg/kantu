@@ -72,6 +72,7 @@ export function InfiniteCanvas({ onImport, onStageReady }: Props) {
   const compactMode = useUiStore((s) => s.compactMode);
   const setContextMenu = useUiStore((s) => s.setContextMenu);
   const showMinimap = useUiStore((s) => s.showMinimap);
+  const immersiveMode = useUiStore((s) => s.immersiveMode);
   const imageZoomFocusId = useUiStore((s) => s.imageZoomFocusId);
 
   const [lastPan, setLastPan] = useState({ x: 0, y: 0 });
@@ -149,6 +150,22 @@ export function InfiniteCanvas({ onImport, onStageReady }: Props) {
       ),
     [groups, images, selectedIds],
   );
+
+  /** 组内文字：在全部图片之后统一绘制，保证压在图片上 */
+  const framedTexts = useMemo(() => {
+    const out: { item: (typeof texts)[0]; frameOrigin: { x: number; y: number } }[] =
+      [];
+    for (const frame of visibleFrames) {
+      const origin = { x: frame.x, y: frame.y };
+      const frameTexts = texts
+        .filter((t) => t.groupId === frame.id && t.visible)
+        .sort((a, b) => a.zIndex - b.zIndex);
+      for (const item of frameTexts) {
+        out.push({ item, frameOrigin: origin });
+      }
+    }
+    return out;
+  }, [visibleFrames, texts]);
 
   const soloZoomImage = useMemo(() => {
     if (!imageZoomFocusId) return null;
@@ -438,10 +455,10 @@ export function InfiniteCanvas({ onImport, onStageReady }: Props) {
   return (
     <div
       ref={canvasWrapRef}
-      className={`${getCanvasWrapClass(canvasBackground)} ${panMode ? "pan-mode" : ""} ${frameDrawActive ? "frame-draw-mode" : ""} ${soloImageZoom ? "image-solo-zoom" : ""}`}
+      className={`${getCanvasWrapClass(canvasBackground)} ${panMode ? "pan-mode" : ""} ${frameDrawActive ? "frame-draw-mode" : ""} ${soloImageZoom ? "image-solo-zoom" : ""} ${immersiveMode ? "immersive-canvas" : ""}`}
       style={getCanvasWrapStyle(canvasBackground, canvasBackgroundColor)}
     >
-      {showEmpty && (
+      {showEmpty && !immersiveMode && (
         <EmptyState onImport={onImport} hasImagesOnOtherBoards={hasAnyContent} />
       )}
       <Stage
@@ -453,6 +470,10 @@ export function InfiniteCanvas({ onImport, onStageReady }: Props) {
         onMouseDown={handleStageMouseDown}
         onDblClick={handleStageDblClick}
         onContextMenu={(e) => {
+          if (immersiveMode) {
+            e.evt.preventDefault();
+            return;
+          }
           if (stageRef.current && e.target !== stageRef.current) return;
           e.evt.preventDefault();
           const ev = e.evt as MouseEvent;
@@ -514,20 +535,7 @@ export function InfiniteCanvas({ onImport, onStageReady }: Props) {
                   panMode={panMode}
                   selected={selectedFrameId === frame.id}
                   onSelectFrame={selectFrame}
-                  texts={texts.filter(
-                    (t) => t.groupId === frame.id && t.visible,
-                  )}
                   onSelectImage={selectImage}
-                  onTextTransformEnd={onTextTransform}
-                />
-              ))}
-              {visibleUnframedTexts.map((item) => (
-                <TextNode
-                  key={item.id}
-                  item={item}
-                  panMode={panMode}
-                  onSelect={selectImage}
-                  onTransformEnd={onTextTransform}
                 />
               ))}
               {visibleUnframed.map((item) => (
@@ -537,6 +545,25 @@ export function InfiniteCanvas({ onImport, onStageReady }: Props) {
                   panMode={panMode}
                   onSelect={selectImage}
                   onTransformEnd={onImageTransform}
+                />
+              ))}
+              {framedTexts.map(({ item, frameOrigin }) => (
+                <TextNode
+                  key={item.id}
+                  item={item}
+                  frameOrigin={frameOrigin}
+                  panMode={panMode}
+                  onSelect={selectImage}
+                  onTransformEnd={onTextTransform}
+                />
+              ))}
+              {visibleUnframedTexts.map((item) => (
+                <TextNode
+                  key={item.id}
+                  item={item}
+                  panMode={panMode}
+                  onSelect={selectImage}
+                  onTransformEnd={onTextTransform}
                 />
               ))}
               <CompareOverlay />
@@ -572,8 +599,10 @@ export function InfiniteCanvas({ onImport, onStageReady }: Props) {
         </Layer>
       </Stage>
       <TextEditorOverlay stageRef={stageRef} />
-      <ZoomControl className="on-canvas" />
-      {hasAnyContent && showMinimap && !soloImageZoom && <Minimap />}
+      {!immersiveMode && <ZoomControl className="on-canvas" />}
+      {!immersiveMode && hasAnyContent && showMinimap && !soloImageZoom && (
+        <Minimap />
+      )}
     </div>
   );
 }

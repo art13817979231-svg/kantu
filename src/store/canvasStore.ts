@@ -48,6 +48,14 @@ import {
   affectedGroupIdsFromRemoval,
   detachFrameMembers,
 } from "../utils/groupOps";
+import {
+  applyLayerOrderToBoard,
+  boardLayerIdsAscending,
+  bumpTextsAboveImages,
+  nextImageZOnBoard,
+  nextTextZOnBoard,
+  TEXT_Z_BASE,
+} from "../utils/layerZ";
 import { useUiStore } from "./uiStore";
 
 type CanvasState = {
@@ -175,59 +183,21 @@ function revokeBlobUrls(images: ImageItem[]) {
   }
 }
 
-function reorderZ(images: ImageItem[], orderedIds: string[]): ImageItem[] {
-  const map = new Map(orderedIds.map((id, i) => [id, i + 1]));
-  return images.map((img) =>
-    map.has(img.id) ? { ...img, zIndex: map.get(img.id)! } : img,
-  );
-}
-
-function reorderZTexts(texts: TextItem[], orderedIds: string[]): TextItem[] {
-  const map = new Map(orderedIds.map((id, i) => [id, i + 1]));
-  return texts.map((t) =>
-    map.has(t.id) ? { ...t, zIndex: map.get(t.id)! } : t,
-  );
-}
-
-/** 当前画板全部图层 id，按 zIndex 从低到高 */
-function boardLayerIdsAscending(s: {
+function layerIdsOnActiveBoard(s: {
   images: ImageItem[];
   texts: TextItem[];
   activeBoardId: string;
 }): string[] {
-  const items = [
-    ...filterImagesByBoard(s.images, s.activeBoardId).map((i) => ({
-      id: i.id,
-      z: i.zIndex,
-    })),
-    ...filterTextsByBoard(s.texts, s.activeBoardId).map((t) => ({
-      id: t.id,
-      z: t.zIndex,
-    })),
-  ];
-  items.sort((a, b) => a.z - b.z);
-  return items.map((x) => x.id);
+  return boardLayerIdsAscending(s.images, s.texts, s.activeBoardId);
 }
 
 function applyBoardLayerOrder(
   images: ImageItem[],
   texts: TextItem[],
+  boardId: string,
   orderedIdsAscending: string[],
 ): { images: ImageItem[]; texts: TextItem[] } {
-  return {
-    images: reorderZ(images, orderedIdsAscending),
-    texts: reorderZTexts(texts, orderedIdsAscending),
-  };
-}
-
-function maxZOnBoard(s: {
-  images: ImageItem[];
-  texts: TextItem[];
-  activeBoardId: string;
-}) {
-  const zi = filterImagesByBoard(s.images, s.activeBoardId).map((i) => i.zIndex);
-  const zt = filterTextsByBoard(s.texts, s.activeBoardId).map((t) => t.zIndex);
-  return Math.max(0, ...zi, ...zt);
+  return applyLayerOrderToBoard(images, texts, boardId, orderedIdsAscending);
 }
 
 export const useCanvasStore = create<CanvasState>((set, get) => ({
@@ -280,10 +250,12 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
     const scaled = applyImportStrategy(items, state.settings.importStrategy).map(
       (item) => ({ ...item, boardId: item.boardId ?? boardId }),
     );
-    const onBoard = filterImagesByBoard(state.images, boardId);
-    const maxZ = onBoard.reduce((m, i) => Math.max(m, i.zIndex), 0);
+    let nextZ = nextImageZOnBoard(state.images, boardId);
     const targetGroupId = state.selectedFrameId;
-    const withZ = scaled.map((item, idx) => ({ ...item, zIndex: maxZ + idx + 1 }));
+    const withZ = scaled.map((item) => {
+      const zIndex = nextZ++;
+      return { ...item, zIndex: Math.min(zIndex, TEXT_Z_BASE - 1) };
+    });
     const withGroup = withZ.map((item) =>
       targetGroupId ? { ...item, groupId: targetGroupId } : item,
     );
@@ -321,7 +293,7 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
       boardId: s.activeBoardId,
       x: x ?? origin.x,
       y: y ?? origin.y,
-      zIndex: maxZOnBoard(s) + 1,
+      zIndex: nextTextZOnBoard(s.images, s.texts, s.activeBoardId),
       groupId: s.selectedFrameId,
     });
     set({
@@ -485,25 +457,26 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
     set((s) => {
       const selected = s.images.filter((img) => s.selectedIds.includes(img.id));
       const selectedTexts = s.texts.filter((t) => s.selectedIds.includes(t.id));
-      let z = maxZOnBoard(s);
+      let imgZ = nextImageZOnBoard(s.images, s.activeBoardId);
       const copies = selected.map((img) => {
-        z += 1;
+        const zIndex = imgZ++;
         return {
           ...img,
           id: uuidv4(),
           x: img.x + 30,
           y: img.y + 30,
-          zIndex: z,
+          zIndex: Math.min(zIndex, TEXT_Z_BASE - 1),
         };
       });
+      let txtZ = nextTextZOnBoard(s.images, s.texts, s.activeBoardId);
       const textCopies = selectedTexts.map((t) => {
-        z += 1;
+        const zIndex = txtZ++;
         return {
           ...t,
           id: uuidv4(),
           x: t.x + 30,
           y: t.y + 30,
-          zIndex: z,
+          zIndex,
         };
       });
       return {
@@ -705,50 +678,76 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
 
   bringToFront: (id) => {
     const s = get();
-    const z = maxZOnBoard(s) + 1;
-    if (s.images.some((i) => i.id === id)) get().updateImage(id, { zIndex: z });
-    else if (s.texts.some((t) => t.id === id)) get().updateText(id, { zIndex: z });
+    if (s.images.some((i) => i.id === id)) {
+      get().updateImage(id, {
+        zIndex: nextImageZOnBoard(s.images, s.activeBoardId),
+      });
+    } else if (s.texts.some((t) => t.id === id)) {
+      get().updateText(id, {
+        zIndex: nextTextZOnBoard(s.images, s.texts, s.activeBoardId),
+      });
+    }
   },
 
   layerMoveUp: () => {
     const s = get();
     if (s.selectedIds.length === 0) return;
-    const ids = boardLayerIdsAscending(s);
+    const ids = layerIdsOnActiveBoard(s);
     for (const sid of s.selectedIds) {
       const idx = ids.indexOf(sid);
       if (idx < ids.length - 1) [ids[idx], ids[idx + 1]] = [ids[idx + 1], ids[idx]];
     }
-    const next = applyBoardLayerOrder(s.images, s.texts, ids);
+    const next = applyBoardLayerOrder(
+      s.images,
+      s.texts,
+      s.activeBoardId,
+      ids,
+    );
     set({ ...next, isDirty: true });
   },
 
   layerMoveDown: () => {
     const s = get();
     if (s.selectedIds.length === 0) return;
-    const ids = boardLayerIdsAscending(s);
+    const ids = layerIdsOnActiveBoard(s);
     for (const sid of [...s.selectedIds].reverse()) {
       const idx = ids.indexOf(sid);
       if (idx > 0) [ids[idx], ids[idx - 1]] = [ids[idx - 1], ids[idx]];
     }
-    const next = applyBoardLayerOrder(s.images, s.texts, ids);
+    const next = applyBoardLayerOrder(
+      s.images,
+      s.texts,
+      s.activeBoardId,
+      ids,
+    );
     set({ ...next, isDirty: true });
   },
 
   layerToTop: () => {
     const s = get();
-    const ids = boardLayerIdsAscending(s);
+    const ids = layerIdsOnActiveBoard(s);
     const rest = ids.filter((id) => !s.selectedIds.includes(id));
     const sel = ids.filter((id) => s.selectedIds.includes(id));
-    const next = applyBoardLayerOrder(s.images, s.texts, [...rest, ...sel]);
+    const next = applyBoardLayerOrder(
+      s.images,
+      s.texts,
+      s.activeBoardId,
+      [...rest, ...sel],
+    );
     set({ ...next, isDirty: true });
   },
 
   layerToBottom: () => {
     const s = get();
-    const ids = boardLayerIdsAscending(s);
+    const ids = layerIdsOnActiveBoard(s);
     const sel = ids.filter((id) => s.selectedIds.includes(id));
     const rest = ids.filter((id) => !s.selectedIds.includes(id));
-    const next = applyBoardLayerOrder(s.images, s.texts, [...sel, ...rest]);
+    const next = applyBoardLayerOrder(
+      s.images,
+      s.texts,
+      s.activeBoardId,
+      [...sel, ...rest],
+    );
     set({ ...next, isDirty: true });
   },
 
@@ -1137,7 +1136,7 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
       );
       if (!imageIdSet.has(activeId)) return s;
 
-      const allDesc = boardLayerIdsAscending(s).reverse();
+      const allDesc = layerIdsOnActiveBoard(s).reverse();
       const imagesDesc = allDesc.filter((id) => imageIdSet.has(id));
       const from = imagesDesc.indexOf(activeId);
       if (from < 0) return s;
@@ -1149,7 +1148,12 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
       const newDesc = allDesc.map((id) =>
         imageIdSet.has(id) ? imagesDesc[imgIdx++]! : id,
       );
-      const next = applyBoardLayerOrder(s.images, s.texts, [...newDesc].reverse());
+      const next = applyBoardLayerOrder(
+        s.images,
+        s.texts,
+        s.activeBoardId,
+        [...newDesc].reverse(),
+      );
       return { ...next, isDirty: true };
     }),
 
@@ -1316,9 +1320,31 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
     const active =
       boards.find((b) => b.id === activeBoardId)?.id ?? boards[0]?.id ?? DEFAULT_BOARD_ID;
     const board = boards.find((b) => b.id === active)!;
+    let normalizedImages = images;
+    let normalizedTexts = texts;
+    for (const b of boards) {
+      normalizedTexts = bumpTextsAboveImages(
+        normalizedImages,
+        normalizedTexts,
+        b.id,
+      );
+      const order = boardLayerIdsAscending(
+        normalizedImages,
+        normalizedTexts,
+        b.id,
+      );
+      const next = applyLayerOrderToBoard(
+        normalizedImages,
+        normalizedTexts,
+        b.id,
+        order,
+      );
+      normalizedImages = next.images;
+      normalizedTexts = next.texts;
+    }
     set({
-      images,
-      texts,
+      images: normalizedImages,
+      texts: normalizedTexts,
       groups,
       categories,
       boards,

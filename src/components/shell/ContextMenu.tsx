@@ -8,6 +8,7 @@ import { isClusterMember } from "../../utils/groupUtils";
 
 export function ContextMenu() {
   const menu = useUiStore((s) => s.contextMenu);
+  const immersiveMode = useUiStore((s) => s.immersiveMode);
   const setContextMenu = useUiStore((s) => s.setContextMenu);
   const removeSelected = useCanvasStore((s) => s.removeSelected);
   const duplicateSelected = useCanvasStore((s) => s.duplicateSelected);
@@ -53,7 +54,7 @@ export function ContextMenu() {
     };
   }, [menu, setContextMenu]);
 
-  if (!menu) return null;
+  if (!menu || immersiveMode) return null;
 
   const hasSelection = selectedIds.length > 0;
   const isImage = !!menu.imageId;

@@ -13,7 +13,16 @@ type Props = {
 export function AppShell({ toolbar, canvas, onOpenRecent }: Props) {
   const sidebarCollapsed = useUiStore((s) => s.sidebarCollapsed);
   const compactMode = useUiStore((s) => s.compactMode);
+  const immersiveMode = useUiStore((s) => s.immersiveMode);
   const toggleSidebar = useUiStore((s) => s.toggleSidebar);
+
+  if (immersiveMode) {
+    return (
+      <div className="app-shell refined-ui immersive-mode">
+        <div className="shell-main shell-main-immersive">{canvas}</div>
+      </div>
+    );
+  }
 
   return (
     <div className={`app-shell refined-ui ${compactMode ? "compact" : ""}`}>
