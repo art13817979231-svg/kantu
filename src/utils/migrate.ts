@@ -59,10 +59,10 @@ export function migrateManifest(raw: ProjectManifest | ManifestV1): ProjectManif
       categories: m.categories ?? [],
       texts: (m.texts ?? []).map((t) => {
         const fontSize =
-          t.fontSize == null || t.fontSize <= 20
-            ? 24
+          t.fontSize == null || t.fontSize < 28
+            ? 28
             : t.fontSize === 32
-              ? 24
+              ? 28
               : t.fontSize;
         const autoSize = t.autoSize !== false;
         const { width, height } = autoSize

@@ -126,8 +126,13 @@ export function TextNode({
           rotation: node.rotation(),
         };
         if (Math.abs(sx - 1) > 0.001 || Math.abs(sy - 1) > 0.001) {
+          const scale = Math.sqrt(Math.abs(sx * sy));
           patch.width = Math.max(TEXT_MIN_WIDTH, node.width() * Math.abs(sx));
           patch.height = Math.max(TEXT_MIN_HEIGHT, node.height() * Math.abs(sy));
+          patch.fontSize = Math.max(
+            12,
+            Math.min(96, Math.round(item.fontSize * scale)),
+          );
           patch.autoSize = false;
         }
         onTransformEnd(item.id, patch);

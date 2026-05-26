@@ -4,10 +4,11 @@ import { DEFAULT_BOARD_ID } from "../types/project";
 import { measureTextBox } from "./measureTextBox";
 
 export const DEFAULT_TEXT = "输入标注…";
-export const DEFAULT_TEXT_FONT_SIZE = 18;
-/** 新建文本框默认宽高（宽扁条，约 5:1） */
+/** 画布世界坐标字号，与 280×64 默认框匹配，标注清晰可读 */
+export const DEFAULT_TEXT_FONT_SIZE = 28;
+/** 新建文本框默认宽高（宽扁条，约 4.4:1） */
 export const DEFAULT_TEXT_WIDTH = 280;
-export const DEFAULT_TEXT_HEIGHT = 48;
+export const DEFAULT_TEXT_HEIGHT = 64;
 export const DEFAULT_TEXT_BACKGROUND = "rgba(18, 18, 24, 0.72)";
 /** 参考图：直角框，角部用延伸线而非圆角 */
 export const TEXT_CORNER_RADIUS = 0;

@@ -197,7 +197,7 @@ describe("migrateManifest", () => {
         },
       ],
     });
-    expect(migrated.texts?.[0].fontSize).toBe(24);
+    expect(migrated.texts?.[0].fontSize).toBe(28);
     expect(migrated.texts?.[0].backgroundColor).toBeTruthy();
   });
 });
