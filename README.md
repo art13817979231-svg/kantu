@@ -5,7 +5,7 @@
 > 产品规划（已同步 v1.0.0 实现）：[docs/PRD-v2-设计师工作台.md](docs/PRD-v2-设计师工作台.md)  
 > 版本历史见 [CHANGELOG.md](CHANGELOG.md)
 
-**当前版本：1.0.0**
+**当前版本：1.0.1**
 
 **仓库**：https://github.com/art13817979231-svg/kantu
 
