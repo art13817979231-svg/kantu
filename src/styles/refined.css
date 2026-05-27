@@ -992,3 +992,68 @@ body,
   background: rgba(28, 28, 36, 0.9);
   border-color: rgba(255, 255, 255, 0.35);
 }
+
+.refined-ui .prompt-dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.45);
+}
+
+.refined-ui .prompt-dialog {
+  min-width: 320px;
+  max-width: 90vw;
+  padding: 20px 22px 18px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(28, 28, 36, 0.96);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.45);
+}
+
+.refined-ui .prompt-dialog-title {
+  margin: 0 0 14px;
+  font-size: 15px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.refined-ui .prompt-dialog-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(12, 12, 18, 0.85);
+  color: #f0f0f5;
+  font-size: 14px;
+  outline: none;
+}
+
+.refined-ui .prompt-dialog-input:focus {
+  border-color: rgba(201, 136, 90, 0.75);
+}
+
+.refined-ui .prompt-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.refined-ui .prompt-dialog-actions button {
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.88);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.refined-ui .prompt-dialog-actions button.primary {
+  border-color: rgba(201, 136, 90, 0.55);
+  background: rgba(201, 136, 90, 0.22);
+}

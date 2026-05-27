@@ -4,6 +4,7 @@ import Konva from "konva";
 import type { ImageItem } from "../types/project";
 import { useCanvasStore } from "../store/canvasStore";
 import { useUiStore } from "../store/uiStore";
+import { getCanvasImageUrl } from "../utils/canvasDisplay";
 
 type Props = {
   item: ImageItem;
@@ -24,6 +25,7 @@ export function ImageNode({
   const imageRef = useRef<Konva.Image>(null);
   const groupRef = useRef<Konva.Group>(null);
   const bringToFront = useCanvasStore((s) => s.bringToFront);
+  const selectedIds = useCanvasStore((s) => s.selectedIds);
   const setSelectedIds = useCanvasStore((s) => s.setSelectedIds);
   const setSelectedFrameId = useCanvasStore((s) => s.setSelectedFrameId);
   const toggleImageZoom = useCanvasStore((s) => s.toggleImageZoom);
@@ -32,6 +34,7 @@ export function ImageNode({
 
   const localX = frameOrigin ? item.x - frameOrigin.x : item.x;
   const localY = frameOrigin ? item.y - frameOrigin.y : item.y;
+  const imageUrl = getCanvasImageUrl(item);
 
   useEffect(() => {
     const img = new window.Image();
@@ -45,8 +48,8 @@ export function ImageNode({
     img.onerror = () => {
       console.warn("[RefBoard] 图片加载失败:", item.name || item.src);
     };
-    img.src = item.src;
-  }, [item.src, item.width, item.height]);
+    img.src = imageUrl;
+  }, [imageUrl, item.name, item.width, item.height]);
 
   const scaleX = item.flipX ? -Math.abs(item.scaleX) : Math.abs(item.scaleX);
   const scaleY = item.flipY ? -Math.abs(item.scaleY) : Math.abs(item.scaleY);
@@ -83,10 +86,14 @@ export function ImageNode({
       }}
       onContextMenu={(e) => {
         e.evt.preventDefault();
+        e.evt.stopPropagation();
         if (immersiveMode) return;
         const ev = e.evt as MouseEvent;
+        if (!selectedIds.includes(item.id)) {
+          setSelectedIds([item.id]);
+        }
+        setSelectedFrameId(null);
         setContextMenu({ x: ev.clientX, y: ev.clientY, imageId: item.id });
-        setSelectedIds([item.id]);
       }}
       onDragStart={(e) => {
         e.cancelBubble = true;
@@ -119,6 +126,7 @@ export function ImageNode({
         image={undefined}
         width={item.width}
         height={item.height}
+        imageSmoothingEnabled
       />
     </Group>
   );

@@ -5,6 +5,7 @@ import { COLOR_MARK_PRESETS } from "../../utils/colorMarks";
 import { TEXT_BG_PRESETS } from "../../utils/textDefaults";
 import { FRAME_COLOR_PRESETS } from "../../utils/frameDefaults";
 import { isClusterMember } from "../../utils/groupUtils";
+import { appPrompt } from "../../utils/appDialog";
 
 export function ContextMenu() {
   const menu = useUiStore((s) => s.contextMenu);
@@ -57,11 +58,27 @@ export function ContextMenu() {
   if (!menu || immersiveMode) return null;
 
   const hasSelection = selectedIds.length > 0;
-  const isImage = !!menu.imageId;
-  const isText = !!menu.textId;
   const isFrame = !!menu.frameId;
-  const menuImage = menu.imageId
-    ? allImages.find((i) => i.id === menu.imageId)
+  const boardImageIds = new Set(
+    allImages.filter((i) => i.boardId === activeBoardId).map((i) => i.id),
+  );
+  const boardTextIds = new Set(
+    texts.filter((t) => t.boardId === activeBoardId).map((t) => t.id),
+  );
+  const hasImageSelection = selectedIds.some((id) => boardImageIds.has(id));
+  const hasTextSelection = selectedIds.some((id) => boardTextIds.has(id));
+  const contextImageId =
+    menu.imageId ??
+    selectedIds.find((id) => boardImageIds.has(id));
+  const contextTextId =
+    menu.textId ??
+    (!contextImageId
+      ? selectedIds.find((id) => boardTextIds.has(id))
+      : undefined);
+  const showImageMenu = hasSelection && hasImageSelection;
+  const showTextMenu = hasSelection && hasTextSelection && !hasImageSelection;
+  const menuImage = contextImageId
+    ? allImages.find((i) => i.id === contextImageId)
     : null;
   const canSelectWholeGroup =
     menuImage?.groupId && isClusterMember(menuImage.groupId, groups);
@@ -82,7 +99,7 @@ export function ContextMenu() {
       style={{ left: menu.x, top: menu.y }}
       onClick={(e) => e.stopPropagation()}
     >
-      {isImage && hasSelection && (
+      {showImageMenu && (
         <>
           <button type="button" onClick={() => run(duplicateSelected)}>
             复制
@@ -143,12 +160,13 @@ export function ContextMenu() {
           <button
             type="button"
             onClick={() =>
-              run(() => {
-                const name = prompt("新画板名称", "新画板");
+              void (async () => {
+                const name = await appPrompt("新画板名称", "新画板");
                 if (name === null) return;
                 const id = addBoard(name);
                 moveSelectedToBoard(id);
-              })
+                setContextMenu(null);
+              })()
             }
           >
             新建画板并移入…
@@ -200,12 +218,13 @@ export function ContextMenu() {
           <button
             type="button"
             onClick={() =>
-              run(() => {
-                const name = prompt("新分类名称", "新分类");
+              void (async () => {
+                const name = await appPrompt("新分类名称", "新分类");
                 if (name === null) return;
                 const id = addCategory(name);
                 assignCategoryToSelected(id);
-              })
+                setContextMenu(null);
+              })()
             }
           >
             新建分类并归入…
@@ -268,11 +287,11 @@ export function ContextMenu() {
           </button>
         </>
       )}
-      {isText && menu.textId && (
+      {showTextMenu && contextTextId && (
         <>
           <button
             type="button"
-            onClick={() => run(() => setEditingTextId(menu.textId!))}
+            onClick={() => run(() => setEditingTextId(contextTextId!))}
           >
             编辑文字
           </button>
@@ -351,7 +370,7 @@ export function ContextMenu() {
           </button>
         </>
       )}
-      {!isImage && !isText && !isFrame && (
+      {!showImageMenu && !showTextMenu && !isFrame && (
         <button type="button" onClick={() => setContextMenu(null)}>
           关闭
         </button>

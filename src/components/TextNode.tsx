@@ -100,6 +100,7 @@ export function TextNode({
       }}
       onContextMenu={(e) => {
         e.evt.preventDefault();
+        e.evt.stopPropagation();
         if (immersiveMode) return;
         const ev = e.evt as MouseEvent;
         setContextMenu({ x: ev.clientX, y: ev.clientY, textId: item.id });
@@ -177,6 +178,7 @@ export function TextNode({
         verticalAlign="top"
         wrap="word"
         listening={false}
+        perfectDrawEnabled
       />
     </Group>
   );

@@ -3,6 +3,7 @@ import { Transformer } from "react-konva";
 import Konva from "konva";
 import { useActiveBoardCanvas } from "../hooks/useActiveBoard";
 import { useCanvasStore } from "../store/canvasStore";
+import { useUiStore } from "../store/uiStore";
 import {
   getAnchorWorldSize,
   selectionTransformerProps,
@@ -25,8 +26,22 @@ export function SelectionTransformer({ stageRef, transformerRef }: Props) {
       : null,
   );
   const viewport = useCanvasStore((s) => s.viewport);
+  const setContextMenu = useUiStore((s) => s.setContextMenu);
+  const immersiveMode = useUiStore((s) => s.immersiveMode);
 
   const anchorSize = getAnchorWorldSize(viewport.zoom);
+
+  const openSelectionContextMenu = (ev: MouseEvent) => {
+    if (immersiveMode || selectedIds.length === 0) return;
+    const imageId = selectedIds.find((id) => images.some((i) => i.id === id));
+    const textId = selectedIds.find((id) => texts.some((t) => t.id === id));
+    setContextMenu({
+      x: ev.clientX,
+      y: ev.clientY,
+      imageId,
+      textId: imageId ? undefined : textId,
+    });
+  };
 
   useEffect(() => {
     const tr = transformerRef.current;
@@ -93,6 +108,11 @@ export function SelectionTransformer({ stageRef, transformerRef }: Props) {
       }
       borderStroke={SELECTION_THEME.border}
       borderStrokeWidth={SELECTION_THEME.borderWidth}
+      onContextMenu={(e) => {
+        e.evt.preventDefault();
+        e.evt.stopPropagation();
+        openSelectionContextMenu(e.evt as MouseEvent);
+      }}
     />
   );
 }

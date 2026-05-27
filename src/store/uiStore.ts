@@ -45,6 +45,9 @@ type UiState = {
     appMode: AppMode;
     shortcutsOpen: boolean;
   } | null;
+  promptDialog: { title: string; defaultValue: string } | null;
+  requestPrompt: (title: string, defaultValue: string) => Promise<string | null>;
+  finishPrompt: (value: string | null) => void;
   setSidebarCollapsed: (v: boolean) => void;
   toggleSidebar: () => void;
   setCompactMode: (v: boolean) => void;
@@ -87,6 +90,8 @@ function loadAppMode(): AppMode {
   return "view";
 }
 
+let promptResolvePending: ((value: string | null) => void) | null = null;
+
 export const useUiStore = create<UiState>((set, get) => ({
   sidebarCollapsed: loadSidebarCollapsed(),
   compactMode: false,
@@ -108,6 +113,20 @@ export const useUiStore = create<UiState>((set, get) => ({
   viewportBeforeImageZoom: null,
   immersiveMode: false,
   immersiveRestore: null,
+  promptDialog: null,
+
+  requestPrompt: (title, defaultValue) =>
+    new Promise<string | null>((resolve) => {
+      promptResolvePending = resolve;
+      set({ promptDialog: { title, defaultValue } });
+    }),
+
+  finishPrompt: (value) => {
+    const resolve = promptResolvePending;
+    promptResolvePending = null;
+    set({ promptDialog: null });
+    resolve?.(value);
+  },
 
   setSidebarCollapsed: (v) => {
     localStorage.setItem("refboard-sidebar-collapsed", String(v));

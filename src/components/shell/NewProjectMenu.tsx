@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useCanvasStore } from "../../store/canvasStore";
+import { appConfirm } from "../../utils/appDialog";
 import { PROJECT_TEMPLATES } from "../../utils/templates";
 
 type Props = {
@@ -41,14 +42,19 @@ export function NewProjectMenu({ onBlankNew }: Props) {
                 type="button"
                 className="new-menu-item"
                 onClick={() => {
-                  setOpen(false);
-                  if (
-                    useCanvasStore.getState().isDirty &&
-                    !confirm("当前项目未保存，确定新建？")
-                  ) {
-                    return;
-                  }
-                  newFromTemplate(tpl.id);
+                  void (async () => {
+                    setOpen(false);
+                    if (
+                      useCanvasStore.getState().isDirty &&
+                      !(await appConfirm(
+                        "当前项目未保存，确定新建？",
+                        "新建项目",
+                      ))
+                    ) {
+                      return;
+                    }
+                    newFromTemplate(tpl.id);
+                  })();
                 }}
               >
                 <strong>{tpl.name}</strong>

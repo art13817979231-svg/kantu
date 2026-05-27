@@ -8,6 +8,7 @@ import {
   setDraftSessionId,
 } from "../utils/autosavePaths";
 import { addRecentFile } from "../utils/recentFiles";
+import { appConfirm } from "../utils/appDialog";
 import { isTauriApp } from "../utils/tauriEnv";
 
 export function useOpenProject() {
@@ -24,7 +25,7 @@ export function useOpenProject() {
       if (
         !skipConfirm &&
         state.isDirty &&
-        !confirm("当前项目未保存，确定打开？")
+        !(await appConfirm("当前项目未保存，确定打开？", "打开项目"))
       ) {
         return false;
       }

@@ -1,4 +1,4 @@
-import { invoke } from "@tauri-apps/api/core";
+import { convertFileSrc, invoke } from "@tauri-apps/api/core";
 import { isTauriApp } from "./tauriEnv";
 
 export const THUMB_MAX = 512;
@@ -40,32 +40,20 @@ export async function createThumbnailFromBytes(
   }
 }
 
-/** 为画布显示生成 src（大图用缩略图代理） */
+/**
+ * 画布显示用原图 URL（不再生成 512px 缩略图，避免放大后发糊）。
+ * 缩略图仅用于联系表等导出场景（createThumbnailFromUrl）。
+ */
 export async function resolveDisplaySrc(
   sourcePath: string | undefined,
   fallbackUrl: string,
-  width: number,
-  height: number,
+  _width?: number,
+  _height?: number,
 ): Promise<string> {
-  if (!needsThumbnailProxy(width, height)) {
-    return fallbackUrl;
+  if (sourcePath && isTauriApp()) {
+    return convertFileSrc(sourcePath);
   }
-
-  if (isTauriApp() && sourcePath) {
-    try {
-      const data = await invoke<number[]>("generate_thumbnail", {
-        path: sourcePath,
-        max_dimension: THUMB_MAX,
-      });
-      return URL.createObjectURL(
-        new Blob([new Uint8Array(data)], { type: "image/png" }),
-      );
-    } catch {
-      return fallbackUrl;
-    }
-  }
-
-  return createThumbnailFromUrl(fallbackUrl, THUMB_MAX);
+  return fallbackUrl;
 }
 
 export async function getDimensionsForPath(

@@ -13,6 +13,7 @@ import {
   removeDraftAutosave,
   rotateDraftSessionId,
 } from "../utils/autosavePaths";
+import { appAlert, appConfirm } from "../utils/appDialog";
 import { isTauriApp } from "../utils/tauriEnv";
 import { addRecentFile } from "../utils/recentFiles";
 
@@ -230,16 +231,26 @@ export function createProjectHandlers(
   getState: () => ReturnType<typeof useCanvasStore.getState>,
 ): ShortcutHandlers {
   return {
-    onNew: () => {
+    onNew: async () => {
       const state = getState();
-      if (state.isDirty && !confirm("当前项目未保存，确定新建？")) return;
+      if (
+        state.isDirty &&
+        !(await appConfirm("当前项目未保存，确定新建？", "新建项目"))
+      ) {
+        return;
+      }
       void removeDraftAutosave();
       rotateDraftSessionId();
       state.newProject();
     },
     onOpen: async () => {
       const state = getState();
-      if (state.isDirty && !confirm("当前项目未保存，确定打开？")) return;
+      if (
+        state.isDirty &&
+        !(await appConfirm("当前项目未保存，确定打开？", "打开项目"))
+      ) {
+        return;
+      }
       const path = await pickOpenProject();
       if (!path) return;
       const { manifest, images, texts, groups, categories, boards, activeBoardId } =
@@ -270,7 +281,9 @@ export function createProjectHandlers(
         if (paths.length > 0) await getState().importPaths(paths);
       } catch (err) {
         console.error("onImport failed", err);
-        alert(`导入失败：${err instanceof Error ? err.message : String(err)}`);
+        void appAlert(
+          `导入失败：${err instanceof Error ? err.message : String(err)}`,
+        );
       }
     },
     onSave: async (saveAs = false) => {
@@ -299,7 +312,7 @@ export function createProjectHandlers(
 
       if (!result.ok) {
         if (result.cancelled) return;
-        alert(result.error ?? "保存失败");
+        void appAlert(result.error ?? "保存失败", "保存失败");
         return;
       }
 

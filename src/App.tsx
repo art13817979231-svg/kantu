@@ -6,6 +6,8 @@ import { ShortcutsHelp } from "./components/shell/ShortcutsHelp";
 import { ContextMenu } from "./components/shell/ContextMenu";
 import { AutosaveRecoveryModal } from "./components/shell/AutosaveRecoveryModal";
 import { ImmersiveHint } from "./components/shell/ImmersiveHint";
+import { PromptDialog } from "./components/shell/PromptDialog";
+import { appConfirm } from "./utils/appDialog";
 import { Toolbar } from "./components/Toolbar";
 import { InfiniteCanvas } from "./components/InfiniteCanvas";
 import { SecondaryView } from "./components/SecondaryView";
@@ -64,11 +66,10 @@ function App() {
     if (secondary || !isTauriApp()) return;
     let unlisten: (() => void) | undefined;
     getTauriWindow().then((win) => {
-      win.onCloseRequested((event) => {
-        if (isDirty) {
-          const ok = confirm("项目未保存，确定退出？");
-          if (!ok) event.preventDefault();
-        }
+      win.onCloseRequested(async (event) => {
+        if (!isDirty) return;
+        const ok = await appConfirm("项目未保存，确定退出？", "退出");
+        if (!ok) event.preventDefault();
       }).then((fn) => {
         unlisten = fn;
       });
@@ -188,6 +189,7 @@ function App() {
       />
       <ShortcutsHelp />
       <ContextMenu />
+      <PromptDialog />
       <ImmersiveHint />
       <AutosaveRecoveryModal
         onRestore={(path) => {

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useCanvasStore } from "../../store/canvasStore";
+import { appPrompt } from "../../utils/appDialog";
 import { countBoardContent } from "../../utils/boardUtils";
 
 export function BoardBar() {
@@ -15,8 +16,8 @@ export function BoardBar() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
 
-  const onAdd = () => {
-    const name = prompt("画板名称", `画板 ${boards.length + 1}`);
+  const onAdd = async () => {
+    const name = await appPrompt("画板名称", `画板 ${boards.length + 1}`);
     if (name === null) return;
     addBoard(name);
   };
@@ -73,7 +74,7 @@ export function BoardBar() {
           type="button"
           className="board-tab board-tab-add"
           title="新建画板"
-          onClick={onAdd}
+          onClick={() => void onAdd()}
         >
           +
         </button>
@@ -83,7 +84,7 @@ export function BoardBar() {
           type="button"
           className="board-bar-delete"
           title="删除当前画板"
-          onClick={() => removeBoard(activeBoardId)}
+          onClick={() => void removeBoard(activeBoardId)}
         >
           删除画板
         </button>

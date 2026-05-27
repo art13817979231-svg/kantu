@@ -20,6 +20,7 @@ import {
 import { isSecondaryWindow } from "../utils/tauriEnv";
 import { passesCategoryFilter } from "../utils/filterImages";
 import { useActiveBoardCanvas } from "../hooks/useActiveBoard";
+import { getStagePixelRatio } from "../utils/canvasDisplay";
 
 type Props = {
   onImport: () => void;
@@ -181,6 +182,10 @@ export function InfiniteCanvas({ onImport, onStageReady }: Props) {
   const soloImageZoom = !!soloZoomImage;
 
   const secondary = isSecondaryWindow();
+  const stagePixelRatio = useMemo(
+    () => getStagePixelRatio(viewport.zoom),
+    [viewport.zoom],
+  );
 
   useEffect(() => {
     const updateSize = () => {
@@ -465,7 +470,7 @@ export function InfiniteCanvas({ onImport, onStageReady }: Props) {
         ref={stageRef}
         width={stageSize.width}
         height={stageSize.height}
-        pixelRatio={window.devicePixelRatio}
+        pixelRatio={stagePixelRatio}
         onWheel={handleWheel}
         onMouseDown={handleStageMouseDown}
         onDblClick={handleStageDblClick}
@@ -476,8 +481,21 @@ export function InfiniteCanvas({ onImport, onStageReady }: Props) {
           }
           if (stageRef.current && e.target !== stageRef.current) return;
           e.evt.preventDefault();
+          e.evt.stopPropagation();
           const ev = e.evt as MouseEvent;
-          setContextMenu({ x: ev.clientX, y: ev.clientY });
+          const st = useCanvasStore.getState();
+          const imageId = st.selectedIds.find((id) =>
+            st.images.some((i) => i.id === id && i.boardId === activeBoardId),
+          );
+          const textId = st.selectedIds.find((id) =>
+            st.texts.some((t) => t.id === id && t.boardId === activeBoardId),
+          );
+          setContextMenu({
+            x: ev.clientX,
+            y: ev.clientY,
+            imageId,
+            textId: imageId ? undefined : textId,
+          });
         }}
         onMouseMove={handleStageMouseMove}
         onMouseUp={handleStageMouseUp}

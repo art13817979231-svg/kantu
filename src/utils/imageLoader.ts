@@ -2,6 +2,7 @@ import { convertFileSrc, invoke } from "@tauri-apps/api/core";
 import { v4 as uuidv4 } from "uuid";
 import type { ImageItem } from "../types/project";
 import { createDefaultImageFields } from "../types/project";
+import { getCanvasImageUrl } from "./canvasDisplay";
 import {
   getDimensionsForPath,
   getDimensionsFromUrl,
@@ -78,19 +79,13 @@ export function getExtension(path: string): string {
   return idx >= 0 ? path.slice(idx) : ".png";
 }
 
-/** 打开项目后为大图生成缩略图显示 */
+/** 打开项目后刷新画布显示 URL（原图，非缩略图） */
 export async function hydrateDisplayThumbnails(
   images: ImageItem[],
 ): Promise<ImageItem[]> {
   const out: ImageItem[] = [];
   for (const img of images) {
-    const fileUrl = img.sourcePath ? convertFileSrc(img.sourcePath) : img.src;
-    const src = await resolveDisplaySrc(
-      img.sourcePath,
-      fileUrl,
-      img.width,
-      img.height,
-    );
+    const src = getCanvasImageUrl(img);
     if (src !== img.src && img.src.startsWith("blob:")) {
       URL.revokeObjectURL(img.src);
     }

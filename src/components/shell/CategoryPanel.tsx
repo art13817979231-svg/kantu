@@ -3,6 +3,7 @@ import { useCanvasStore } from "../../store/canvasStore";
 import { useActiveBoardCanvas } from "../../hooks/useActiveBoard";
 import { useUiStore } from "../../store/uiStore";
 import { UNCATEGORIZED_FILTER } from "../../types/project";
+import { appConfirm, appPrompt } from "../../utils/appDialog";
 
 function countByCategory(
   images: { categoryId: string | null }[],
@@ -52,8 +53,8 @@ export function CategoryPanel() {
     setEditingId(null);
   };
 
-  const onAddCategory = () => {
-    const name = prompt("分类名称", "新分类");
+  const onAddCategory = async () => {
+    const name = await appPrompt("分类名称", "新分类");
     if (name === null) return;
     const id = addCategory(name);
     setCategoryFilter(id);
@@ -145,9 +146,18 @@ export function CategoryPanel() {
               className="category-row-delete"
               title="删除分类（图片变为未分类）"
               onClick={() => {
-                if (!confirm(`删除分类「${cat.name}」？图片将变为未分类。`)) return;
-                removeCategory(cat.id);
-                if (categoryFilter === cat.id) setCategoryFilter("all");
+                void (async () => {
+                  if (
+                    !(await appConfirm(
+                      `删除分类「${cat.name}」？图片将变为未分类。`,
+                      "删除分类",
+                    ))
+                  ) {
+                    return;
+                  }
+                  removeCategory(cat.id);
+                  if (categoryFilter === cat.id) setCategoryFilter("all");
+                })();
               }}
             >
               ×
@@ -160,7 +170,11 @@ export function CategoryPanel() {
         )}
       </div>
 
-      <button type="button" className="category-add-btn" onClick={onAddCategory}>
+      <button
+        type="button"
+        className="category-add-btn"
+        onClick={() => void onAddCategory()}
+      >
         + 新建分类
       </button>
 

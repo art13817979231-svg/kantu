@@ -48,6 +48,7 @@ import {
   affectedGroupIdsFromRemoval,
   detachFrameMembers,
 } from "../utils/groupOps";
+import { appConfirm } from "../utils/appDialog";
 import {
   applyLayerOrderToBoard,
   boardLayerIdsAscending,
@@ -127,7 +128,7 @@ type CanvasState = {
   assignCategoryToSelected: (categoryId: string | null) => void;
   addBoard: (name: string) => string;
   renameBoard: (id: string, name: string) => void;
-  removeBoard: (id: string) => void;
+  removeBoard: (id: string) => Promise<void>;
   switchBoard: (id: string) => void;
   moveSelectedToBoard: (boardId: string) => void;
   alignSelected: (kind: AlignKind) => void;
@@ -875,14 +876,17 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
       isDirty: true,
     })),
 
-  removeBoard: (id) => {
+  removeBoard: async (id) => {
     const s = get();
     if (s.boards.length <= 1) return;
     const fallback = s.boards.find((b) => b.id !== id)?.id;
     if (!fallback) return;
     if (
       countBoardContent(s.images, s.texts, id) > 0 &&
-      !confirm("该画板仍有图片或标注，删除后内容将移到其它画板。继续？")
+      !(await appConfirm(
+        "该画板仍有图片或标注，删除后内容将移到其它画板。继续？",
+        "删除画板",
+      ))
     ) {
       return;
     }

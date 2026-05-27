@@ -4,11 +4,7 @@ import { filterImagesByBoard } from "../utils/boardUtils";
 import { isImagePath } from "../types/project";
 import { isTauriApp } from "../utils/tauriEnv";
 import { createDefaultImageFields } from "../types/project";
-import {
-  createThumbnailFromUrl,
-  getDimensionsFromUrl,
-  needsThumbnailProxy,
-} from "../utils/thumbnail";
+import { getDimensionsFromUrl } from "../utils/thumbnail";
 
 async function importFromFiles(files: FileList) {
   const store = useCanvasStore.getState();
@@ -39,10 +35,7 @@ async function importFromFiles(files: FileList) {
       URL.revokeObjectURL(blobUrl);
       continue;
     }
-    const src = needsThumbnailProxy(dim.width, dim.height)
-      ? await createThumbnailFromUrl(blobUrl)
-      : blobUrl;
-    if (src !== blobUrl) URL.revokeObjectURL(blobUrl);
+    const src = blobUrl;
     items.push({
       id: uuidv4(),
       src,
