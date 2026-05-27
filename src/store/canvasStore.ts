@@ -48,7 +48,7 @@ import {
   affectedGroupIdsFromRemoval,
   detachFrameMembers,
 } from "../utils/groupOps";
-import { appConfirm } from "../utils/appDialog";
+import { appAlert, appConfirm } from "../utils/appDialog";
 import {
   applyLayerOrderToBoard,
   boardLayerIdsAscending,
@@ -249,7 +249,7 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
     const state = get();
     const boardId = state.activeBoardId;
     const scaled = applyImportStrategy(items, state.settings.importStrategy).map(
-      (item) => ({ ...item, boardId: item.boardId ?? boardId }),
+      (item) => ({ ...item, boardId }),
     );
     let nextZ = nextImageZOnBoard(state.images, boardId);
     const targetGroupId = state.selectedFrameId;
@@ -390,17 +390,25 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
     const onBoard = filterImagesByBoard(state.images, state.activeBoardId);
     const maxZ = onBoard.reduce((m, i) => Math.max(m, i.zIndex), 0);
     try {
-      const items = await loadImagesFromPaths(paths, origin, maxZ + 1);
+      const items = await loadImagesFromPaths(
+        paths,
+        origin,
+        maxZ + 1,
+        state.activeBoardId,
+      );
       if (items.length === 0) {
-        alert("没有可导入的图片（请检查格式是否为 png/jpg/webp 等）。");
+        void appAlert(
+          "没有可导入的图片（请检查格式是否为 png/jpg/webp 等）。",
+        );
         return;
       }
       get().addImages(items, true);
       queueMicrotask(() => get().fitToView());
     } catch (err) {
       console.error("importPaths failed", err);
-      alert(
+      void appAlert(
         `导入失败：${err instanceof Error ? err.message : String(err)}\n\n若在浏览器中打开，请改用「npm run tauri dev」桌面版导入本地文件。`,
+        "导入失败",
       );
     }
   },

@@ -1,7 +1,7 @@
 import { convertFileSrc, invoke } from "@tauri-apps/api/core";
 import { v4 as uuidv4 } from "uuid";
 import type { ImageItem } from "../types/project";
-import { createDefaultImageFields } from "../types/project";
+import { createDefaultImageFields, DEFAULT_BOARD_ID } from "../types/project";
 import { getCanvasImageUrl } from "./canvasDisplay";
 import {
   getDimensionsForPath,
@@ -17,6 +17,7 @@ export async function loadImageFromPath(
   path: string,
   position?: { x: number; y: number },
   zIndex?: number,
+  boardId: string = DEFAULT_BOARD_ID,
 ): Promise<ImageItem> {
   const fileUrl = convertFileSrc(path);
   const dimensions = await getDimensionsForPath(path, fileUrl);
@@ -40,7 +41,10 @@ export async function loadImageFromPath(
     rotation: 0,
     opacity: 1,
     zIndex: zIndex ?? 0,
-    ...createDefaultImageFields({ name: nameFromPath(path) }),
+    ...createDefaultImageFields({
+      name: nameFromPath(path),
+      boardId,
+    }),
   };
 }
 
@@ -48,6 +52,7 @@ export async function loadImagesFromPaths(
   paths: string[],
   layoutOrigin: { x: number; y: number },
   startZIndex: number,
+  boardId: string = DEFAULT_BOARD_ID,
 ): Promise<ImageItem[]> {
   const items: ImageItem[] = [];
   let offsetX = 0;
@@ -57,6 +62,7 @@ export async function loadImagesFromPaths(
       paths[i],
       { x: layoutOrigin.x + offsetX, y: layoutOrigin.y },
       startZIndex + i,
+      boardId,
     );
     items.push(item);
     offsetX += item.width + 20;
